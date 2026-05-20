@@ -69,10 +69,10 @@ adminRouter.post("/signin", async function (req, res) {
 // Protected routes
 adminRouter.post("/course", adminMiddleware, async function (req, res) {
   const adminId = req.adminId;
-  const { title, description, imageUrl, price } = req.body;
+  const { title, description, thumbnailUrl, videoUrl, price, category } = req.body;
 
-  if (!title || !description || !imageUrl || !price) {
-    return res.status(400).json({ message: "Please provide all the fields" });
+  if (!title || !description || !thumbnailUrl || !price) {
+    return res.status(400).json({ message: "Please provide title, description, thumbnailUrl, and price" });
   }
 
   const courseExists = await courseModel.findOne({ title });
@@ -83,8 +83,10 @@ adminRouter.post("/course", adminMiddleware, async function (req, res) {
   const course = await courseModel.create({
     title,
     description,
-    image: imageUrl,
+    thumbnailUrl,
+    videoUrl: videoUrl || "",
     price,
+    category: category || "General",
     creatorId: adminId,
   });
 
@@ -95,20 +97,20 @@ adminRouter.post("/course", adminMiddleware, async function (req, res) {
 });
 
 adminRouter.put("/course", adminMiddleware, async function (req, res) {
-  const { courseId, title, description, price, image } = req.body;
+  const { courseId, title, description, price, thumbnailUrl, videoUrl, category } = req.body;
   const adminId = req.adminId;
+
+  const updates = { title, description, price };
+  if (thumbnailUrl !== undefined) updates.thumbnailUrl = thumbnailUrl;
+  if (videoUrl !== undefined) updates.videoUrl = videoUrl;
+  if (category !== undefined) updates.category = category;
   
   const course = await courseModel.findOneAndUpdate(
     {
       _id: courseId,
       creatorId: adminId,
     },
-    {
-      title,
-      description,
-      price,
-      image,
-    },
+    updates,
     { new: true }
   );
 

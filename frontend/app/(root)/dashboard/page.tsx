@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { GraduationCap, Home, Loader2, LogOut, Search } from "lucide-react"
+import { GraduationCap, Home, Loader2, LogOut, Play, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,12 @@ import {
     SidebarProvider,
     SidebarTrigger,
 } from "@/components/ui/sidebar"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
 import { useAuth } from "@/lib/authContext"
 import { redirect } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -28,6 +34,7 @@ import { CreateCourse } from "@/components/createCourse"
 import { CourseType } from "@/index"
 import Image from "next/image"
 import { Separator } from "@/components/ui/separator"
+import { getCourseThumbnail } from "@/lib/course"
 import ProfileBtn from "@/components/profile"
 
 export default function DashboardPage() {
@@ -36,6 +43,10 @@ export default function DashboardPage() {
     const [courses, setCourses] = useState<CourseType[]>([]);
     const [enrolledCourses, setEnrolledCourses] = useState<CourseType[]>([]);
     const [publishedCourses, setPublishedCourses] = useState<CourseType[]>([]);
+
+    // video popup state
+    const [videoOpen, setVideoOpen] = useState(false);
+    const [activeCourse, setActiveCourse] = useState<CourseType | null>(null);
 
     const handleLogout = async () => {
         await axios.post(process.env.NEXT_PUBLIC_API_URL + "/api/v1/logout", {}, { withCredentials: true });
@@ -59,7 +70,9 @@ export default function DashboardPage() {
                     ]);
 
                     const allCourses: CourseType[] = coursesRes.data?.courses || [];
-                    const enrolledIds: string[] = enrolledRes.data?.purchases.map((e: { courseId: string }) => e.courseId);
+                    const enrolledIds: string[] = enrolledRes.data?.purchases.map((e: { courseId: CourseType }) =>
+                        typeof e.courseId === "object" ? e.courseId._id : e.courseId
+                    );
 
                     const enrolled: CourseType[] = allCourses.filter(course => enrolledIds.includes(course._id));
                     const remaining: CourseType[] = allCourses.filter(course => !enrolledIds.includes(course._id));
@@ -67,58 +80,50 @@ export default function DashboardPage() {
                     setCourses(remaining);
                     setEnrolledCourses(enrolled);
 
-                    toast.success("Courses fetched successfully", {
-                        id: "fetch-courses",
-                    });
-                } catch (err) {
-                    toast.error("Failed to fetch courses or enrolled courses.", {
-                        id: "fetch-courses",
-                    });
+                    toast.success("Courses fetched successfully", { id: "fetch-courses" });
+                } catch {
+                    toast.error("Failed to fetch courses.", { id: "fetch-courses" });
                 }
             }
         }
 
-        async function publisedCourses() {
+        async function fetchPublished() {
             try {
                 const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/course/launched`, { withCredentials: true });
-                if (res.status === 200) {
-                    setPublishedCourses(res.data?.courses || []);
-                }
-            } catch (err) {
-                throw new Error("Failed to fetch published courses");
-            }
+                if (res.status === 200) setPublishedCourses(res.data?.courses || []);
+            } catch { /* admin might not have any courses */ }
         }
-        publisedCourses();
+
+        fetchPublished();
         fetchData();
     }, [loading]);
 
     const handleEnrollCourse = async (courseId: string) => {
-        toast.loading("Enrolling in course...", {
-            id: "enroll-course",
-        });
+        toast.loading("Enrolling in course...", { id: "enroll-course" });
         try {
-            const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/course/purchase`,
+            const res = await axios.post(
+                `${process.env.NEXT_PUBLIC_API_URL}/api/v1/course/purchase`,
                 { userId: user?._id, courseId },
                 { withCredentials: true },
             );
             if (res.status === 201) {
-                toast.success("Enrolled in course successfully", {
-                    id: "enroll-course",
-                });
+                toast.success("Enrolled successfully", { id: "enroll-course" });
                 window.location.reload();
             }
-        } catch (err) {
-            console.error("Error enrolling in course:", err);
-            toast.error("Failed to enroll in course", {
-                id: "enroll-course",
-            });
+        } catch {
+            toast.error("Failed to enroll", { id: "enroll-course" });
         }
+    }
+
+    function openVideo(course: CourseType) {
+        setActiveCourse(course);
+        setVideoOpen(true);
     }
 
     const filteredCourses = courses.filter(
         (course: CourseType) =>
             course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            course.description.toLowerCase().includes(searchQuery.toLowerCase()),
+            (course.description || "").toLowerCase().includes(searchQuery.toLowerCase()),
     )
 
     if (loading) {
@@ -132,6 +137,29 @@ export default function DashboardPage() {
 
     return (
         <SidebarProvider>
+            {/* ── Video popup ─────────────────────────────── */}
+            <Dialog open={videoOpen} onOpenChange={(v) => { setVideoOpen(v); if (!v) setActiveCourse(null); }}>
+                <DialogContent className="max-w-3xl p-0 overflow-hidden rounded-2xl gap-0">
+                    <DialogHeader className="px-5 pt-4 pb-3 border-b">
+                        <DialogTitle className="text-base font-semibold truncate pr-8">
+                            {activeCourse?.title ?? "Course Video"}
+                        </DialogTitle>
+                    </DialogHeader>
+                    {activeCourse?.videoUrl ? (
+                        <video
+                            src={activeCourse.videoUrl}
+                            controls
+                            autoPlay
+                            className="aspect-video w-full bg-black"
+                        />
+                    ) : (
+                        <div className="flex aspect-video w-full items-center justify-center bg-muted text-sm text-muted-foreground">
+                            No video available for this course yet.
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+
             <div className="flex min-h-dvh w-full">
                 <Sidebar>
                     <SidebarHeader>
@@ -150,14 +178,6 @@ export default function DashboardPage() {
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>
-                            {/* <SidebarMenuItem>
-                                <SidebarMenuButton asChild>
-                                    <Link href="/dashboard/profile">
-                                        <User className="size-4" />
-                                        <span>Profile</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem> */}
                         </SidebarMenu>
                     </SidebarContent>
                     <SidebarFooter>
@@ -172,6 +192,7 @@ export default function DashboardPage() {
                         </SidebarMenu>
                     </SidebarFooter>
                 </Sidebar>
+
                 <div className="flex flex-1 flex-col">
                     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-6">
                         <SidebarTrigger />
@@ -189,141 +210,168 @@ export default function DashboardPage() {
                                 </div>
                             </form>
                             <div className="flex gap-3 items-center">
-                                {user?.role === "admin" && (
-                                    <CreateCourse />
-                                )}
-                                <ProfileBtn firstName={user?.firstName ?? ''} lastName={user?.lastName ?? ''} email={user?.email ?? ''} avatar={
-                                    <Avatar className="size-10 cursor-pointer border">
-                                        <AvatarFallback>{user?.firstName[0]}</AvatarFallback>
-                                    </Avatar>
-                                } />
+                                {user?.role === "admin" && <CreateCourse />}
+                                <ProfileBtn
+                                    firstName={user?.firstName ?? ""}
+                                    lastName={user?.lastName ?? ""}
+                                    email={user?.email ?? ""}
+                                    avatar={
+                                        <Avatar className="size-10 cursor-pointer border">
+                                            <AvatarFallback>{user?.firstName[0]}</AvatarFallback>
+                                        </Avatar>
+                                    }
+                                />
                             </div>
                         </div>
                     </header>
+
                     <main className="flex-1 p-6">
                         <div className="flex flex-col gap-6">
                             <div>
                                 <h1 className="text-3xl font-bold tracking-tight">Welcome back, {user?.firstName}!</h1>
                                 <p className="text-muted-foreground">
-                                    {user?.role === "admin" ? "Manage your courses and users here." : "Continue learning or explore new courses to enhance your skills."}
+                                    {user?.role === "admin"
+                                        ? "Manage your courses and users here."
+                                        : "Continue learning or explore new courses to enhance your skills."}
                                 </p>
                             </div>
                             <Separator />
-                            <div className="">
-                                {user?.role === "user" && (
-                                    <div>
-                                        <h2 className="text-2xl font-bold tracking-tight mb-4">My Learning</h2>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {enrolledCourses.length !== 0 && (
-                                                enrolledCourses.map((course) => (
-                                                    <Card key={course._id} className="overflow-hidden pt-0 flex flex-col justify-between h-full">
-                                                        <div className="aspect-video w-full overflow-hidden">
-                                                            <Image
-                                                                src={course.image || "/placeholder.svg"}
-                                                                alt={course.title}
-                                                                className="object-cover w-full h-full"
-                                                                width={350}
-                                                                height={200}
-                                                            />
-                                                        </div>
-                                                        <CardHeader className="px-4">
-                                                            <CardTitle>{course.title}</CardTitle>
-                                                        </CardHeader>
-                                                        <CardFooter className="px-4 pt-0">
-                                                            <Button asChild className="w-full">
-                                                                <Link href={`/dashboard/course/${course._id}`}>Continue Learning</Link>
-                                                            </Button>
-                                                        </CardFooter>
-                                                    </Card>
-                                                ))
-                                            )}
-                                        </div>
-                                        {enrolledCourses.length === 0 && (
-                                            <div className="text-center text-muted-foreground">
-                                                <p>You haven&apos;t enrolled in any courses yet.</p>
-                                                <p>Explore available courses to start learning!</p>
-                                            </div>
-                                        )}
-                                        <Separator className="my-6" />
-                                        <h2 className="text-2xl font-bold tracking-tight mb-4">Available Courses</h2>
-                                        {filteredCourses.length !== 0 && (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                {filteredCourses.map((course: CourseType) => (
-                                                    <Card key={course._id} className="overflow-hidden py-0 flex flex-col justify-between h-full">
-                                                        <div className="aspect-video w-full overflow-hidden">
-                                                            <Image
-                                                                src={course.image || "/placeholder.svg"}
-                                                                alt={course.title}
-                                                                className="object-cover w-full h-full"
-                                                                width={350}
-                                                                height={200}
-                                                            />
-                                                        </div>
-                                                        <CardHeader className="px-4">
-                                                            <CardTitle>{course.title}</CardTitle>
-                                                            <CardDescription className="line-clamp-2">{course.description}</CardDescription>
-                                                        </CardHeader>
-                                                        <CardContent className="px-4 pt-0">
-                                                            <p className="font-bold">₹{course.price}</p>
-                                                        </CardContent>
-                                                        <CardFooter className="px-4 pb-4">
-                                                            <Button className="w-full" onClick={() => handleEnrollCourse(course._id)}>
-                                                                Enroll Now
-                                                            </Button>
-                                                        </CardFooter>
-                                                    </Card>
-                                                ))}
-                                            </div>
-                                        )}
-                                        {filteredCourses.length === 0 && (
-                                            <div className="text-center text-muted-foreground">
-                                                <p>No courses found matching your search.</p>
-                                                <p>Try a different search term or check back later!</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                                {user?.role === "admin" && (
-                                    <div>
-                                        <h2 className="text-2xl font-bold tracking-tight">Published Courses</h2>
-                                        <p className="text-muted-foreground mb-4">
-                                            As an admin, you can create and watch list of published courses.
-                                        </p>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {publishedCourses.length !== 0 && (
-                                                publishedCourses.map((course) => (
-                                                    <Card key={course._id} className="overflow-hidden pt-0 flex flex-col justify-between h-full">
-                                                        <div className="aspect-video w-full overflow-hidden">
-                                                            <Image
-                                                                src={course.image || "/placeholder.svg"}
-                                                                alt={course.title}
-                                                                className="object-cover w-full h-full"
-                                                                width={350}
-                                                                height={200}
-                                                            />
-                                                        </div>
-                                                        <CardHeader className="px-4">
-                                                            <CardTitle>{course.title}</CardTitle>
-                                                        </CardHeader>
-                                                        <CardFooter className="px-4 pt-0">
-                                                            <Button asChild className="w-full">
-                                                                <Link href={`/dashboard/course/${course._id}`}>Launced successfully! 🎉</Link>
-                                                            </Button>
-                                                        </CardFooter>
-                                                    </Card>
-                                                ))
-                                            )}
-                                        </div>
-                                        {publishedCourses.length === 0 && (
-                                            <div className="text-center text-muted-foreground">
-                                                <p>You haven&apos;t enrolled in any courses yet.</p>
-                                                <p>Explore available courses to start learning!</p>
-                                            </div>
-                                        )}
-                                    </div>
 
-                                )}
-                            </div>
+                            {/* ── USER VIEW ── */}
+                            {user?.role === "user" && (
+                                <div>
+                                    {/* My Learning */}
+                                    <h2 className="text-2xl font-bold tracking-tight mb-4">My Learning</h2>
+                                    {enrolledCourses.length !== 0 ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {enrolledCourses.map((course) => (
+                                                <Card
+                                                    key={course._id}
+                                                    className="overflow-hidden pt-0 flex flex-col justify-between h-full group cursor-pointer"
+                                                    onClick={() => openVideo(course)}
+                                                >
+                                                    <div className="relative aspect-video w-full overflow-hidden">
+                                                        <Image
+                                                            src={getCourseThumbnail(course)}
+                                                            alt={course.title}
+                                                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-[1.03]"
+                                                            width={350}
+                                                            height={200}
+                                                        />
+                                                        {/* Play overlay */}
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                            <div className="flex size-12 items-center justify-center rounded-full bg-white/90 shadow-lg">
+                                                                <Play className="size-5 fill-black text-black pl-0.5" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <CardHeader className="px-4">
+                                                        <CardTitle className="line-clamp-1">{course.title}</CardTitle>
+                                                    </CardHeader>
+                                                    <CardFooter className="px-4 pt-0">
+                                                        <Button className="w-full gap-2" variant="outline" onClick={(e) => { e.stopPropagation(); openVideo(course); }}>
+                                                            <Play className="size-4" /> Continue Learning
+                                                        </Button>
+                                                    </CardFooter>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-muted-foreground py-6">
+                                            <p>You haven&apos;t enrolled in any courses yet.</p>
+                                            <p>Explore available courses to start learning!</p>
+                                        </div>
+                                    )}
+
+                                    <Separator className="my-6" />
+
+                                    {/* Available Courses */}
+                                    <h2 className="text-2xl font-bold tracking-tight mb-4">Available Courses</h2>
+                                    {filteredCourses.length !== 0 ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {filteredCourses.map((course: CourseType) => (
+                                                <Card key={course._id} className="overflow-hidden py-0 flex flex-col justify-between h-full">
+                                                    <Link href={`/dashboard/${course._id}`} className="block">
+                                                        <div className="aspect-video w-full overflow-hidden">
+                                                            <Image
+                                                                src={getCourseThumbnail(course)}
+                                                                alt={course.title}
+                                                                className="object-cover w-full h-full transition-transform duration-300 hover:scale-[1.03]"
+                                                                width={350}
+                                                                height={200}
+                                                            />
+                                                        </div>
+                                                    </Link>
+                                                    <CardHeader className="px-4">
+                                                        <CardTitle className="line-clamp-1">{course.title}</CardTitle>
+                                                        <CardDescription className="line-clamp-2">{course.description}</CardDescription>
+                                                    </CardHeader>
+                                                    <CardContent className="px-4 pt-0">
+                                                        <p className="font-bold">₹{course.price}</p>
+                                                    </CardContent>
+                                                    <CardFooter className="px-4 pb-4 gap-2 flex-col sm:flex-row">
+                                                        <Button asChild variant="outline" className="w-full">
+                                                            <Link href={`/dashboard/${course._id}`}>View Details</Link>
+                                                        </Button>
+                                                        <Button className="w-full" onClick={() => handleEnrollCourse(course._id)}>
+                                                            Enroll Now
+                                                        </Button>
+                                                    </CardFooter>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-muted-foreground py-6">
+                                            <p>No courses found matching your search.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* ── ADMIN VIEW ── */}
+                            {user?.role === "admin" && (
+                                <div>
+                                    <h2 className="text-2xl font-bold tracking-tight">Published Courses</h2>
+                                    <p className="text-muted-foreground mb-4">
+                                        Courses you&apos;ve created on LearnHub.
+                                    </p>
+                                    {publishedCourses.length !== 0 ? (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                            {publishedCourses.map((course) => (
+                                                <Card key={course._id} className="overflow-hidden pt-0 flex flex-col justify-between h-full group cursor-pointer" onClick={() => openVideo(course)}>
+                                                    <div className="relative aspect-video w-full overflow-hidden">
+                                                        <Image
+                                                            src={getCourseThumbnail(course)}
+                                                            alt={course.title}
+                                                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-[1.03]"
+                                                            width={350}
+                                                            height={200}
+                                                        />
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                            <div className="flex size-12 items-center justify-center rounded-full bg-white/90 shadow-lg">
+                                                                <Play className="size-5 fill-black text-black pl-0.5" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <CardHeader className="px-4">
+                                                        <CardTitle className="line-clamp-1">{course.title}</CardTitle>
+                                                    </CardHeader>
+                                                    <CardFooter className="px-4 pt-0">
+                                                        <Button className="w-full gap-2" variant="outline" onClick={(e) => { e.stopPropagation(); openVideo(course); }}>
+                                                            <Play className="size-4" /> Preview Video
+                                                        </Button>
+                                                    </CardFooter>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-muted-foreground py-6">
+                                            <p>You haven&apos;t created any courses yet.</p>
+                                            <p>Click &quot;Create Course&quot; to get started!</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </main>
                 </div>

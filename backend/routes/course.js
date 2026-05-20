@@ -1,4 +1,5 @@
 const { Router } = require("express");
+const mongoose = require("mongoose");
 const userMiddleware = require("../middleware/userMiddleware");
 const { purchaseModel, courseModel } = require("../database/db");
 const adminMiddleware = require("../middleware/adminMiddeware");
@@ -59,6 +60,21 @@ courseRouter.get("/launched", adminMiddleware, async(req, res) => {
     message: "Launched courses",
     courses
   });
+});
+
+// Must be last — :id would otherwise match "launched", "preview", etc.
+courseRouter.get("/:id", userMiddleware, async(req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(404).json({ message: "Course not found" });
+  }
+
+  const course = await courseModel.findById(id);
+  if (!course) {
+    return res.status(404).json({ message: "Course not found" });
+  }
+  res.status(200).json({ message: "Course", course });
 });
 
 module.exports = {

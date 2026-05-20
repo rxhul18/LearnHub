@@ -11,73 +11,75 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { Plus } from "lucide-react"
 import { useAuth } from "@/lib/authContext"
 import { toast } from "sonner"
 import axios from "axios"
+import { ThumbnailUpload } from "@/components/ThumbnailUpload"
+import { VideoUpload } from "@/components/VideoUpload"
 
 export function CreateCourse() {
     const { user } = useAuth()
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
     const [price, setPrice] = useState("")
-    const [imageUrl, setImage] = useState("")
+    const [category, setCategory] = useState("")
+    const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
+    const [videoUrl, setVideoUrl] = useState<string | null>(null)
     const [isOpen, setIsOpen] = useState(false)
+    const [submitting, setSubmitting] = useState(false)
+
+    const resetForm = () => {
+        setTitle("")
+        setDescription("")
+        setPrice("")
+        setCategory("")
+        setThumbnailUrl(null)
+        setVideoUrl(null)
+    }
 
     const handleSubmit = async () => {
-        console.log({
-            title,
-            description,
-            price,
-            imageUrl
-        })
         if (!user) {
             toast.error("You must be logged in to create a course.")
-            return;
-        }
-        if (title === "" || description === "" || price === "" || imageUrl === "") {
-            toast.error("Please fill in all fields")
             return
         }
-        toast.loading("Creating course...", {
-            id: "create-course"
-        })
+        if (!title || !description || !price || !thumbnailUrl) {
+            toast.error("Please fill in title, description, price, and upload a thumbnail.")
+            return
+        }
+
+        setSubmitting(true)
+        toast.loading("Creating course...", { id: "create-course" })
+
         try {
-            await axios.post(process.env.NEXT_PUBLIC_API_URL + "/api/v1/admin/course", {
-                title,
-                description,
-                price,
-                imageUrl
-            }, { withCredentials: true })
-                .then((res) => {
-                    if (res.status === 201) {
-                        toast.success("Course created successfully", {
-                            id: "create-course"
-                        })
-                        setTitle("")
-                        setDescription("")
-                        setPrice("")
-                        setImage("")
-                        setIsOpen(false)
-                        window.location.reload()
-                    } else {
-                        toast.error("Course creation failed", {
-                            id: "create-course"
-                        })
-                    }
-                })
-                .catch((err) => {
-                    toast.error("Course creation failed", {
-                        description: err.response.data.message,
-                        id: "create-course"
-                    })
-                })
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const res = await axios.post(
+                process.env.NEXT_PUBLIC_API_URL + "/api/v1/admin/course",
+                {
+                    title,
+                    description,
+                    price: Number(price),
+                    category: category || "General",
+                    thumbnailUrl,
+                    videoUrl: videoUrl || "",
+                },
+                { withCredentials: true }
+            )
+
+            if (res.status === 201) {
+                toast.success("Course created successfully", { id: "create-course" })
+                resetForm()
+                setIsOpen(false)
+                window.location.reload()
+            }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             toast.error("Course creation failed", {
-                description: error.response.data.message,
-                id: "create-course"
+                description: error.response?.data?.message || "Something went wrong",
+                id: "create-course",
             })
+        } finally {
+            setSubmitting(false)
         }
     }
 
@@ -86,60 +88,78 @@ export function CreateCourse() {
             <DialogTrigger asChild>
                 <Button><Plus /><span className="hidden md:flex">Create Course</span></Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[560px]">
                 <DialogHeader>
                     <DialogTitle>Create a new course</DialogTitle>
                     <DialogDescription>
-                        Fill in the course details and click create.
+                        Upload a thumbnail and video, then fill in the course details.
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="title" className="text-right">Title</Label>
-                        <Input
-                            id="title"
-                            placeholder="e.g. Fullstack Bootcamp"
-                            className="col-span-3"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                        />
+                <div className="grid gap-5 py-2">
+                    <div className="space-y-2">
+                        <Label>Thumbnail</Label>
+                        <ThumbnailUpload value={thumbnailUrl} onChange={setThumbnailUrl} />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="description" className="text-right">Description</Label>
-                        <Input
-                            id="description"
-                            placeholder="Brief summary"
-                            className="col-span-3"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                        />
+
+                    <div className="space-y-2">
+                        <Label>Course video <span className="text-muted-foreground">(optional)</span></Label>
+                        <VideoUpload value={videoUrl} onChange={setVideoUrl} />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="price" className="text-right">Price</Label>
-                        <Input
-                            id="price"
-                            type="number"
-                            placeholder="e.g. 499"
-                            className="col-span-3"
-                            value={price}
-                            onChange={(e) => setPrice(e.target.value)}
-                        />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="image" className="text-right">Image URL</Label>
-                        <Input
-                            id="image"
-                            placeholder="https://..."
-                            className="col-span-3"
-                            value={imageUrl}
-                            onChange={(e) => setImage(e.target.value)}
-                        />
+
+                    <div className="grid gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="title">Title</Label>
+                            <Input
+                                id="title"
+                                placeholder="e.g. Fullstack Bootcamp"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                                id="description"
+                                placeholder="Brief summary of the course"
+                                rows={3}
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="price">Price (₹)</Label>
+                                <Input
+                                    id="price"
+                                    type="number"
+                                    placeholder="499"
+                                    value={price}
+                                    onChange={(e) => setPrice(e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="category">Category</Label>
+                                <Input
+                                    id="category"
+                                    placeholder="e.g. Web Development"
+                                    value={category}
+                                    onChange={(e) => setCategory(e.target.value)}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <DialogFooter>
-                    <Button onClick={handleSubmit} className="w-full"><Plus />Create Course</Button>
+                    <Button
+                        onClick={handleSubmit}
+                        className="w-full"
+                        disabled={submitting || !thumbnailUrl}
+                    >
+                        <Plus />
+                        {submitting ? "Creating…" : "Create Course"}
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

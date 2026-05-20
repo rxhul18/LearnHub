@@ -21,7 +21,9 @@ const courseSchema = new Schema({
     title:{type:String,required:true},
     description:String,
     price:Number,
-    image:String,
+    thumbnailUrl:String,
+    videoUrl:String,
+    category:{type:String,default:"General"},
     creatorId: ObjectId,
 })
 

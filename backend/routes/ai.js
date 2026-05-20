@@ -74,7 +74,7 @@ aiRouter.post("/suggest", async (req, res) => {
 
     const courses = await courseModel
       .find({})
-      .select("title description price image category")
+      .select("title description price thumbnailUrl videoUrl category")
       .sort({ _id: -1 })
       .lean();
 
@@ -128,7 +128,7 @@ function pickRecommendedCourses(reply, courses) {
       title: c.title,
       description: c.description,
       price: c.price,
-      image: c.image,
+      image: c.thumbnailUrl,
       category: c.category,
     }));
 

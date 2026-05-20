@@ -15,6 +15,7 @@
   "description": "",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "aws-sdk": "^2.1693.0",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -22,6 +23,8 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.0.0",
+    "multer": "^2.1.1",
+    "multer-s3": "^2.10.0",
     "nodemon": "^3.1.9",
     "zod": "^3.24.2"
   }
