@@ -4,6 +4,7 @@ const PORT = process.env.PORT || 5000;
 const { courseRouter } = require("./routes/course");
 const { userRouter } = require("./routes/user");
 const { adminRouter } = require("./routes/admin");
+const { aiRouter } = require("./routes/ai");
 const Connection = require("./config");
 const app = express();
 const cors = require("cors");
@@ -74,6 +75,7 @@ app.post("/api/v1/logout", (req, res) => {
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/course", courseRouter);
 app.use("/api/v1/admin", adminRouter);
+app.use("/api/ai", aiRouter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
