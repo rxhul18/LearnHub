@@ -34,9 +34,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    getCurrentUser().then((data: { user: any; }) => {
-      setUser(data?.user || null);
+    getCurrentUser().then((data) => {
+      if (data?.user) {
+        setUser({ ...data.user, role: data.role });
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
   }, []);

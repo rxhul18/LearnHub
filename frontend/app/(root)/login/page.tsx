@@ -21,17 +21,20 @@ import axios from "axios";
 import Footer from "@/components/footer";
 import Logo from "@/components/logo";
 import { useAuth } from "@/lib/authContext";
-import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
 
-    const { user, loading } = useAuth();
+    const { user, loading, setUser } = useAuth();
+    const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState("");
 
     if (!loading && user) {
-        redirect("/dashboard");
+        router.replace("/dashboard");
+        return null;
     }
 
     if (loading) {
@@ -67,10 +70,11 @@ export default function LoginPage() {
                         description: `Welcome back, ${email}!`,
                         id: "login",
                     });
-
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
+                    const data = await getCurrentUser();
+                    if (data?.user) {
+                        setUser({ ...data.user, role: data.role });
+                        router.push("/dashboard");
+                    }
                 }
             } catch (error) {
                 toast.error("Login failed", {
@@ -92,9 +96,11 @@ export default function LoginPage() {
                         description: `Welcome back, ${email}!`,
                         id: "adminlogin"
                     });
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
+                    const data = await getCurrentUser();
+                    if (data?.user) {
+                        setUser({ ...data.user, role: data.role });
+                        router.push("/dashboard");
+                    }
                 }
             } catch (error) {
                 toast.error("Adminlogin failed", {
@@ -151,7 +157,7 @@ export default function LoginPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <Button type="submit" className="w-full" onClick={handleLogin}>
+                            <Button type="button" className="w-full" onClick={handleLogin}>
                                 Login
                             </Button>
                         </div>

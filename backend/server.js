@@ -10,7 +10,9 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const { userModel, adminModel } = require("./database/db");
-const JWT_SECRET = process.env.USERJWT_SECRET;
+const USERJWT_SECRET = process.env.USERJWT_SECRET;
+const ADMINJWT_SECRET = process.env.ADMINJWT_SECRET;
+const { cookieOptions } = require("./lib/cookieOptions");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -28,7 +30,12 @@ async function verifyTokenWithRole(req, res, next) {
   if (!token) return res.status(401).json({ message: "Unauthorized" });
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, USERJWT_SECRET);
+    } catch {
+      decoded = jwt.verify(token, ADMINJWT_SECRET);
+    }
     const { id, role } = decoded;
 
     let user;
@@ -61,11 +68,7 @@ app.get("/api/v1/me", verifyTokenWithRole, (req, res) => {
 });
 
 app.post("/api/v1/logout", (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
-  });
+  res.clearCookie("token", cookieOptions);
   return res.status(200).json({ message: "Logged out successfully" });
 });
 app.use("/api/v1/user", userRouter);

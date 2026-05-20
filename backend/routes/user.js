@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const userRouter = Router();
 const JWT_SECRET = process.env.USERJWT_SECRET;
 const jwt = require("jsonwebtoken");
+const { cookieOptions } = require("../lib/cookieOptions");
 const userMiddleware = require("../middleware/userMiddleware");
 
 userRouter.post("/signup", async (req, res) => {
@@ -64,13 +65,7 @@ userRouter.post("/signin", async (req, res) => {
     }
   );
 
-  // Set token in HTTP-only cookie
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
-  });
+  res.cookie("token", token, cookieOptions);
   console.log("Signin successful", email);
   // res.header("token", token);
   return res.status(200).json({ message: "Signin successful" });

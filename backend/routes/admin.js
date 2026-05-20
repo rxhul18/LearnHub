@@ -3,6 +3,7 @@ const { adminModel, courseModel } = require("../database/db");
 const adminRouter = Router();
 const JWT_SECRET = process.env.ADMINJWT_SECRET;
 const jwt = require("jsonwebtoken");
+const { cookieOptions } = require("../lib/cookieOptions");
 const bcrypt = require("bcrypt");
 const adminMiddleware = require("../middleware/adminMiddeware");
 
@@ -60,13 +61,7 @@ adminRouter.post("/signin", async function (req, res) {
     }
   );
 
-  // Set token in HTTP-only cookie
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
-  });
+  res.cookie("token", token, cookieOptions);
   console.log("Signin successful", email);
   return res.status(200).json({ message: "Signin successful" });
 });
