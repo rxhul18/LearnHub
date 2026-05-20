@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -58,8 +58,11 @@ export const metadata: Metadata = {
     creator: "@rahulwtf", // Add your Twitter handle if available
     images: ["https://learnhub.rahulwtf.in/og-image.png"]
   },
-  themeColor: "#0f172a", // Dark blue/gray for modern look
   category: "Education"
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({
