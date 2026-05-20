@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { GraduationCap, Home, Loader2, LogOut, Play, Search, X } from "lucide-react"
+import { GraduationCap, Home, Loader2, LogOut, PictureInPicture2, Play, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -243,37 +242,47 @@ export default function DashboardPage() {
                                     {/* My Learning */}
                                     <h2 className="text-2xl font-bold tracking-tight mb-4">My Learning</h2>
                                     {enrolledCourses.length !== 0 ? (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                                             {enrolledCourses.map((course) => (
-                                                <Card
+                                                <div
                                                     key={course._id}
-                                                    className="overflow-hidden pt-0 flex flex-col justify-between h-full group cursor-pointer"
-                                                    onClick={() => openVideo(course)}
+                                                    className="group relative"
                                                 >
-                                                    <div className="relative aspect-video w-full overflow-hidden">
-                                                        <Image
-                                                            src={getCourseThumbnail(course)}
-                                                            alt={course.title}
-                                                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-[1.03]"
-                                                            width={350}
-                                                            height={200}
-                                                        />
-                                                        {/* Play overlay */}
-                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                                            <div className="flex size-12 items-center justify-center rounded-full bg-white/90 shadow-lg">
-                                                                <Play className="size-5 fill-black text-black pl-0.5" />
+                                                    <Link
+                                                        href={`/dashboard/${course._id}`}
+                                                        className="block overflow-hidden rounded-2xl ring-1 ring-border/50 bg-card transition-all duration-300 hover:ring-border hover:shadow-lg hover:shadow-black/5"
+                                                    >
+                                                        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                                                            <Image
+                                                                src={getCourseThumbnail(course)}
+                                                                alt={course.title}
+                                                                fill
+                                                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                                                className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                                                            />
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                                                            <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-4">
+                                                                <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-white">
+                                                                    {course.title}
+                                                                </h3>
+                                                                <span className="shrink-0 text-[11px] font-medium text-white/70 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                                                                    Open →
+                                                                </span>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <CardHeader className="px-4">
-                                                        <CardTitle className="line-clamp-1">{course.title}</CardTitle>
-                                                    </CardHeader>
-                                                    <CardFooter className="px-4 pt-0">
-                                                        <Button className="w-full gap-2" variant="outline" onClick={(e) => { e.stopPropagation(); openVideo(course); }}>
-                                                            <Play className="size-4" /> Continue Learning
-                                                        </Button>
-                                                    </CardFooter>
-                                                </Card>
+                                                    </Link>
+                                                    {course.videoUrl && (
+                                                        <button
+                                                            type="button"
+                                                            title="Quick preview"
+                                                            aria-label="Open video preview"
+                                                            onClick={() => openVideo(course)}
+                                                            className="absolute right-3 top-3 z-10 flex size-8 items-center justify-center rounded-lg bg-white/90 text-neutral-900 shadow-sm opacity-0 backdrop-blur-sm transition-all duration-200 group-hover:opacity-100 hover:bg-white hover:scale-105"
+                                                        >
+                                                            <PictureInPicture2 className="size-3.5" />
+                                                        </button>
+                                                    )}
+                                                </div>
                                             ))}
                                         </div>
                                     ) : (

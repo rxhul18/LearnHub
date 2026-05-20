@@ -35,7 +35,6 @@ export default function CourseDetailPage() {
     const [isEnrolled, setIsEnrolled] = useState(false)
     const [pageLoading, setPageLoading] = useState(true)
     const [enrolling, setEnrolling] = useState(false)
-    const [playing, setPlaying] = useState(false)
 
     useEffect(() => {
         if (authLoading) return
@@ -45,7 +44,7 @@ export default function CourseDetailPage() {
         }
         load()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [authLoading, user])
+    }, [authLoading, user, id])
 
     async function load() {
         setPageLoading(true)
@@ -65,7 +64,7 @@ export default function CourseDetailPage() {
                     typeof p.courseId === "object"
                         ? (p.courseId as CourseType)._id
                         : p.courseId
-                return cId === id
+                return String(cId) === String(id)
             })
             setIsEnrolled(enrolled)
         } catch {
@@ -124,57 +123,92 @@ export default function CourseDetailPage() {
 
     return (
         <div className="min-h-screen bg-background">
-            {/* Top nav bar */}
             <header className="sticky top-0 z-40 flex h-14 items-center gap-3 border-b bg-background/95 px-4 backdrop-blur sm:px-6">
                 <Button variant="ghost" size="icon" asChild>
                     <Link href="/dashboard">
                         <ArrowLeft className="size-5" />
                     </Link>
                 </Button>
-                <div className="flex items-center gap-2">
-                    <GraduationCap className="size-6" />
-                    <span className="font-semibold text-sm hidden sm:block">LearnHub</span>
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <GraduationCap className="size-6 shrink-0" />
+                    <span className="truncate font-semibold text-sm">
+                        {isEnrolled ? course.title : "LearnHub"}
+                    </span>
                 </div>
+                {isEnrolled && (
+                    <Badge variant="secondary" className="shrink-0 gap-1 text-green-700 dark:text-green-400">
+                        <CheckCircle2 className="size-3" />
+                        Enrolled
+                    </Badge>
+                )}
             </header>
 
-            <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
-                <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-
-                    {/* LEFT — course info */}
-                    <div className="space-y-6 order-2 lg:order-1">
-                        {/* Category */}
-                        {course.category && (
-                            <Badge variant="secondary" className="gap-1.5">
-                                <Tag className="size-3" />
-                                {course.category}
-                            </Badge>
-                        )}
-
-                        <h1 className="text-3xl font-bold leading-tight tracking-tight">
-                            {course.title}
-                        </h1>
-
-                        <p className="text-muted-foreground leading-relaxed">
-                            {course.description || "No description available."}
-                        </p>
-
-                        <Separator />
-
-                        {/* Price row */}
-                        <div className="flex items-center gap-2">
-                            <IndianRupee className="size-5 text-foreground" />
-                            <span className="text-2xl font-bold">{course.price}</span>
+            {/* ── ENROLLED: full-width video + info below ── */}
+            {isEnrolled ? (
+                <>
+                    {course.videoUrl ? (
+                        <div className="w-full bg-black">
+                            <video
+                                src={course.videoUrl}
+                                controls
+                                autoPlay
+                                playsInline
+                                className="aspect-video w-full max-h-[70vh] object-contain"
+                            />
                         </div>
-
-                        {/* Enrollment status */}
-                        {isEnrolled ? (
-                            <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 dark:border-green-900 dark:bg-green-950/30">
-                                <CheckCircle2 className="size-5 shrink-0 text-green-600" />
-                                <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                                    You&apos;re enrolled in this course
-                                </p>
+                    ) : (
+                        <div className="flex aspect-video w-full items-center justify-center bg-muted">
+                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                                <BookOpen className="size-10" />
+                                <p className="text-sm">No video uploaded for this course yet.</p>
                             </div>
-                        ) : (
+                        </div>
+                    )}
+
+                    <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
+                        <div className="space-y-4">
+                            {course.category && (
+                                <Badge variant="secondary" className="gap-1.5">
+                                    <Tag className="size-3" />
+                                    {course.category}
+                                </Badge>
+                            )}
+                            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                                {course.title}
+                            </h1>
+                            <p className="text-muted-foreground leading-relaxed">
+                                {course.description || "No description available."}
+                            </p>
+                        </div>
+                    </main>
+                </>
+            ) : (
+                /* ── NOT ENROLLED: details + sidebar thumbnail ── */
+                <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+                    <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
+                        <div className="space-y-6 order-2 lg:order-1">
+                            {course.category && (
+                                <Badge variant="secondary" className="gap-1.5">
+                                    <Tag className="size-3" />
+                                    {course.category}
+                                </Badge>
+                            )}
+
+                            <h1 className="text-3xl font-bold leading-tight tracking-tight">
+                                {course.title}
+                            </h1>
+
+                            <p className="text-muted-foreground leading-relaxed">
+                                {course.description || "No description available."}
+                            </p>
+
+                            <Separator />
+
+                            <div className="flex items-center gap-2">
+                                <IndianRupee className="size-5 text-foreground" />
+                                <span className="text-2xl font-bold">{course.price}</span>
+                            </div>
+
                             <Button
                                 size="lg"
                                 className="w-full sm:w-auto"
@@ -184,82 +218,24 @@ export default function CourseDetailPage() {
                                 {enrolling && <Loader2 className="size-4 animate-spin" />}
                                 Enroll Now — ₹{course.price}
                             </Button>
-                        )}
+                        </div>
 
-                        {/* Video player (enrolled only) */}
-                        {isEnrolled && course.videoUrl && (
-                            <div className="space-y-3">
-                                <Separator />
-                                <h2 className="font-semibold text-lg">Course Video</h2>
-                                {playing ? (
-                                    <div className="overflow-hidden rounded-2xl border bg-black">
-                                        <video
-                                            src={course.videoUrl}
-                                            controls
-                                            autoPlay
-                                            className="aspect-video w-full"
-                                        />
+                        <div className="order-1 lg:order-2">
+                            <div className="overflow-hidden rounded-2xl border shadow-sm">
+                                <Image
+                                    src={thumbnail}
+                                    alt={course.title}
+                                    width={640}
+                                    height={360}
+                                    className="aspect-video w-full object-cover"
+                                />
+                                <div className="space-y-4 p-5">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                                            Course Price
+                                        </span>
+                                        <span className="text-xl font-bold">₹{course.price}</span>
                                     </div>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() => setPlaying(true)}
-                                        className="group relative w-full overflow-hidden rounded-2xl border"
-                                    >
-                                        <Image
-                                            src={thumbnail}
-                                            alt={course.title}
-                                            width={800}
-                                            height={450}
-                                            className="aspect-video w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-                                        />
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 transition-colors group-hover:bg-black/40">
-                                            <div className="flex size-16 items-center justify-center rounded-full bg-white/90 shadow-xl transition-transform duration-200 group-hover:scale-110">
-                                                <Play className="size-7 fill-black text-black pl-1" />
-                                            </div>
-                                        </div>
-                                    </button>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Enrolled but no video */}
-                        {isEnrolled && !course.videoUrl && (
-                            <div className="space-y-3">
-                                <Separator />
-                                <div className="flex items-center gap-3 rounded-xl border bg-muted/40 px-4 py-3">
-                                    <BookOpen className="size-5 text-muted-foreground shrink-0" />
-                                    <p className="text-sm text-muted-foreground">
-                                        No video uploaded for this course yet. Check back soon!
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* RIGHT — thumbnail card */}
-                    <div className="order-1 lg:order-2">
-                        <div className="overflow-hidden rounded-2xl border shadow-sm">
-                            <Image
-                                src={thumbnail}
-                                alt={course.title}
-                                width={640}
-                                height={360}
-                                className="aspect-video w-full object-cover"
-                            />
-                            <div className="space-y-4 p-5">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                                        Course Price
-                                    </span>
-                                    <span className="text-xl font-bold">₹{course.price}</span>
-                                </div>
-                                {isEnrolled ? (
-                                    <div className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
-                                        <CheckCircle2 className="size-4" />
-                                        Enrolled
-                                    </div>
-                                ) : (
                                     <Button
                                         className="w-full"
                                         onClick={handleEnroll}
@@ -267,25 +243,17 @@ export default function CourseDetailPage() {
                                     >
                                         {enrolling ? (
                                             <Loader2 className="size-4 animate-spin" />
-                                        ) : null}
-                                        Enroll Now
+                                        ) : (
+                                            <Play className="size-4" />
+                                        )}
+                                        Enroll to Watch
                                     </Button>
-                                )}
-                                {isEnrolled && course.videoUrl && !playing && (
-                                    <Button
-                                        variant="outline"
-                                        className="w-full gap-2"
-                                        onClick={() => setPlaying(true)}
-                                    >
-                                        <Play className="size-4" />
-                                        Watch Course
-                                    </Button>
-                                )}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </main>
+                </main>
+            )}
         </div>
     )
 }
