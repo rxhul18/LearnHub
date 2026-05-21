@@ -17,12 +17,6 @@ import {
     SidebarProvider,
     SidebarTrigger,
 } from "@/components/ui/sidebar"
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
 import { useAuth } from "@/lib/authContext"
 import { redirect } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -34,6 +28,7 @@ import { CourseType } from "@/index"
 import Image from "next/image"
 import { Separator } from "@/components/ui/separator"
 import { getCourseThumbnail } from "@/lib/course"
+import { HeroVideoDialog } from "@/components/ui/hero-video-dialog"
 import ProfileBtn from "@/components/profile"
 
 export default function DashboardPage() {
@@ -136,28 +131,20 @@ export default function DashboardPage() {
 
     return (
         <SidebarProvider>
-            {/* ── Video popup ─────────────────────────────── */}
-            <Dialog open={videoOpen} onOpenChange={(v) => { setVideoOpen(v); if (!v) setActiveCourse(null); }}>
-                <DialogContent className="max-w-3xl p-0 overflow-hidden rounded-2xl gap-0">
-                    <DialogHeader className="px-5 pt-4 pb-3 border-b">
-                        <DialogTitle className="text-base font-semibold truncate pr-8">
-                            {activeCourse?.title ?? "Course Video"}
-                        </DialogTitle>
-                    </DialogHeader>
-                    {activeCourse?.videoUrl ? (
-                        <video
-                            src={activeCourse.videoUrl}
-                            controls
-                            autoPlay
-                            className="aspect-video w-full bg-black"
-                        />
-                    ) : (
-                        <div className="flex aspect-video w-full items-center justify-center bg-muted text-sm text-muted-foreground">
-                            No video available for this course yet.
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
+            {/* Quick video preview (controlled HeroVideoDialog) */}
+            {activeCourse?.videoUrl && (
+                <HeroVideoDialog
+                    open={videoOpen}
+                    onOpenChange={(open) => {
+                        setVideoOpen(open)
+                        if (!open) setActiveCourse(null)
+                    }}
+                    showTrigger={false}
+                    videoSrc={activeCourse.videoUrl}
+                    thumbnailSrc={getCourseThumbnail(activeCourse)}
+                    thumbnailAlt={activeCourse.title}
+                />
+            )}
 
             <div className="flex min-h-dvh w-full">
                 <Sidebar>

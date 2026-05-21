@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { ArrowRight, BookOpen, CheckCircle, GraduationCap, Loader2, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import heroImage from "@/public/images/heroImage.png"
+import heroImage from "@/public/images/heroImage.webp"
 import WebDev from "@/public/images/WebDev.png"
 import DataScience from "@/public/images/DataScience.png"
 import UiUx from "@/public/images/ui-ux.jpg"
@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/authContext"
 import { redirect } from "next/navigation"
 import Footer from "@/components/footer"
 import Logo from "@/components/logo"
+import { Globe } from "@/components/ui/globe"
 
 export default function LandingPage() {
     const { user, loading } = useAuth();
@@ -88,11 +89,11 @@ export default function LandingPage() {
                                     </Link>
                                 </div>
                             </div>
-                            <div className="hidden lg:block">
+                            <div className="hidden lg:flex items-center justify-center">
                                 <Image
                                     src={heroImage}
                                     alt="Hero Image"
-                                    className="rounded-xl object-cover shadow-lg"
+                                    className="mx-auto rounded-xl object-cover shadow-lg"
                                 />
                             </div>
                         </div>
@@ -241,6 +242,26 @@ export default function LandingPage() {
                                         <ArrowRight className="size-4" />
                                     </Button>
                                 </Link>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Globe + LearnHub */}
+                <section className="min-w-full flex justify-center max-w-[90%] border-t">
+                    <div className="relative flex min-h-[88vh] w-full flex-col items-center overflow-hidden bg-gradient-to-b from-background via-muted/25 to-background">
+                        <div className="relative z-20 w-full px-4 pt-16 text-center md:pt-24">
+                            <h2>
+                                <Logo className="text-6xl font-bold tracking-tighter sm:text-7xl md:text-8xl lg:text-[7.5rem] lg:leading-none" />
+                            </h2>
+                            <p className="mx-auto mt-4 max-w-lg text-sm text-muted-foreground md:text-base">
+                                Learn without borders — courses for learners everywhere.
+                            </p>
+                        </div>
+
+                        <div className="relative mt-4 flex w-full flex-1 items-end justify-center overflow-hidden md:mt-8">
+                            <div className="relative h-[min(58vh,640px)] w-full min-h-[380px] sm:h-[62vh] sm:min-h-[440px] md:min-h-[520px]">
+                                <Globe className="!max-w-none bottom-[-40%] left-1/2 top-auto h-[min(95vw,920px)] w-[min(95vw,920px)] -translate-x-1/2" />
                             </div>
                         </div>
                     </div>
