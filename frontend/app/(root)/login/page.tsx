@@ -2,15 +2,6 @@
 
 import Link from "next/link"
 import { Eye, GraduationCap, Loader2 } from "lucide-react"
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectLabel,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -30,7 +21,7 @@ export default function LoginPage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [role, setRole] = useState("");
+    const [loginAsAdmin, setLoginAsAdmin] = useState(false);
 
     if (!loading && user) {
         router.replace("/dashboard");
@@ -46,15 +37,14 @@ export default function LoginPage() {
         )
     }
     async function handleLogin() {
-        if (email === "" || password === "" || role === "") {
+        if (email === "" || password === "") {
             toast.error("Please fill in all fields")
             return
         }
-        if (role !== "user" && role !== "admin") {
-            toast.error("Invalid role selected")
-            return
 
-        } else if (role === "user") {
+        const role = loginAsAdmin ? "admin" : "user"
+
+        if (role === "user") {
             toast.loading("Loginng in as user", {
                 id: "login"
             })
@@ -131,31 +121,32 @@ export default function LoginPage() {
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
-                                <Input id="email" type="email" placeholder="rahul@example.com" required onChange={(e) => (setEmail(e.target.value))} />
+                                <Input id="email" type="email" placeholder="example@example.com" required onChange={(e) => (setEmail(e.target.value))} />
                             </div>
                             <div className="relative space-y-2">
                                 <div className="flex items-center">
                                     <Label htmlFor="password">Password</Label>
                                 </div>
-                                <Input id="password" type="password" required onChange={(e) => (setPassword(e.target.value))} placeholder="Rahuhl1234"/>
+                                <Input id="password" type="password" required onChange={(e) => (setPassword(e.target.value))} placeholder="Example@1234"/>
                                 <Button variant="ghost" size="icon" className="absolute bottom-1 right-1 h-7 w-7">
                                     <Eye className="size-4" />
                                     <span className="sr-only">Toggle password visibility</span>
                                 </Button>
                             </div>
-                            <div className="space-y-1">
-                                <Select required onValueChange={(value => setRole(value))}>
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Select the role!!" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectGroup>
-                                            <SelectLabel>Avaiable roles</SelectLabel>
-                                            <SelectItem value="user">user</SelectItem>
-                                            <SelectItem value="admin">admin</SelectItem>
-                                        </SelectGroup>
-                                    </SelectContent>
-                                </Select>
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="login-as-admin"
+                                    checked={loginAsAdmin}
+                                    onChange={(e) => setLoginAsAdmin(e.target.checked)}
+                                    className="size-4 shrink-0 cursor-pointer rounded border border-input accent-foreground"
+                                />
+                                <Label
+                                    htmlFor="login-as-admin"
+                                    className="cursor-pointer font-normal text-muted-foreground"
+                                >
+                                    Login as admin
+                                </Label>
                             </div>
                             <Button type="button" className="w-full" onClick={handleLogin}>
                                 Login

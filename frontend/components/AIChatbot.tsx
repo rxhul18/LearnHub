@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 type Role = "user" | "assistant";
@@ -262,7 +263,7 @@ export default function AIChatbot() {
           {/* Input */}
           <div className="shrink-0 border-t border-neutral-100 bg-neutral-50 p-3 dark:border-neutral-800 dark:bg-neutral-900">
             <div className="flex items-end gap-2 rounded-xl border border-neutral-200 bg-white px-3 py-2 transition-all focus-within:border-neutral-400 focus-within:ring-1 focus-within:ring-neutral-300 dark:border-neutral-700 dark:bg-neutral-950 dark:focus-within:border-neutral-500">
-              <textarea
+              <Textarea
                 ref={inputRef}
                 rows={1}
                 value={input}
@@ -270,7 +271,7 @@ export default function AIChatbot() {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about courses…"
                 disabled={loading}
-                className="max-h-28 flex-1 resize-none bg-transparent text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none dark:text-white dark:placeholder:text-neutral-500"
+                className="min-h-0 flex-1 resize-none border-0 bg-transparent px-0 py-1.5 shadow-none focus-visible:ring-0"
               />
               <Button
                 type="button"

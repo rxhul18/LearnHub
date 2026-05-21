@@ -262,9 +262,14 @@ export default function DashboardPage() {
                                                             />
                                                             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
                                                             <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 p-4">
-                                                                <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-white">
-                                                                    {course.title}
-                                                                </h3>
+                                                                <div className="flex flex-col">
+                                                                    <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-white">
+                                                                        {course.title}
+                                                                    </h3>
+                                                                    <p className="text-white/70 text-[11px] font-medium">
+                                                                        {course.description}
+                                                                    </p>
+                                                                </div>
                                                                 <span className="shrink-0 text-[11px] font-medium text-white/70 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                                                                     Open →
                                                                 </span>

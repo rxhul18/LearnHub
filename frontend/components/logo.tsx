@@ -1,11 +1,21 @@
-import React from 'react'
+import { cn } from "@/lib/utils"
 
-const Logo = () => {
+type LogoProps = {
+  className?: string
+}
+
+const Logo = ({ className }: LogoProps) => {
   return (
-    <div className='flex items-center px-2 py-1.5 gap-1 bg-black rounded h-fit'>
-        <span className='bg-black font-bold text-white'>Learn</span>
-        <span className='bg-amber-500 text-white font-bold px-1 rounded-xs'>Hub</span>
-    </div>
+    <span
+      className={cn(
+        "inline-flex items-baseline gap-px text-lg font-semibold tracking-tight",
+        className
+      )}
+      aria-label="LearnHub"
+    >
+      <span className="text-foreground">Learn</span>
+      <span className="text-amber-600 dark:text-amber-500">Hub</span>
+    </span>
   )
 }
 
